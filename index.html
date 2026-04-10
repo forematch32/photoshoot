@@ -3,150 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant Photostrip</title>
+    <title>Photobox Mini</title>
     <style>
         :root {
-            --bg-body: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --text-color: white;
-            --btn-shot: #e94560;
+            --bg-color: #121212;
+            --text-color: #eeeeee;
+            --btn-bg: #ffffff;
+            --btn-text: #000000;
+            --box-shadow: rgba(0,0,0,0.5);
+            --photo-border: #fff;
         }
+
+        [data-theme="light"] {
+            --bg-color: #f4f4f4;
+            --text-color: #121212;
+            --btn-bg: #121212;
+            --btn-text: #ffffff;
+            --box-shadow: rgba(0,0,0,0.1);
+            --photo-border: #fff;
+        }
+
         body {
-            font-family: sans-serif;
-            background: var(--bg-body);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-color);
             color: var(--text-color);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             margin: 0;
+            transition: background 0.3s, color 0.3s;
         }
-        .container {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 20px;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        video {
+        .app-container {
             width: 100%;
-            border-radius: 10px;
+            max-width: 450px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .header-section {
+            margin-bottom: 15px;
+        }
+        .header-section h1 {
+            margin-bottom: 5px;
+        }
+        .attribution {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: -5px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .theme-switch-wrapper {
+            margin-bottom: 20px;
+        }
+        .theme-switch {
+            background: none;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .camera-box {
+            position: relative;
+            width: 100%;
             background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            box-shadow: 0 10px 30px var(--box-shadow);
+        }
+        #preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             transform: scaleX(-1);
         }
-        #counter {
-            font-size: 50px;
+        #timer-overlay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            font-size: 80px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
             display: none;
-            color: #e94560;
-            font-weight: bold;
+            z-index: 10;
         }
-        .btns { margin-top: 20px; }
-        button {
-            padding: 10px 20px;
-            border-radius: 5px;
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-action {
+            background: var(--btn-bg);
+            color: var(--btn-text);
             border: none;
-            background: var(--btn-shot);
-            color: white;
-            cursor: pointer;
+            padding: 15px 35px;
+            font-size: 16px;
             font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            width: fit-content;
         }
-        #result {
-            width: 150px;
-            margin-top: 20px;
+        .btn-action:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .btn-reset {
+            background: transparent;
+            color: #ff4d4d;
+            border: 2px solid #ff4d4d;
+            margin-top: 10px;
+        }
+        #result-display {
+            margin-top: 30px;
             display: none;
-            border: 5px solid white;
+        }
+        #result-img {
+            max-width: 200px;
+            border: 8px solid var(--photo-border);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2 id="status">Filmstrip Ready</h2>
-    <div style="position: relative;">
-        <div id="counter">3</div>
-        <video id="view" autoplay playsinline></video>
+<div class="app-container">
+    <div class="header-section">
+        <h1 id="indicator">StopnShot!</h1>
+        <span class="attribution">by Hajell.</span>
     </div>
-    <div class="btns">
-        <button id="shot">START SESSION</button>
-        <a id="download" style="display:none; color:cyan; margin-top:10px; display:block;">Download Click Here</a>
+
+    <div class="theme-switch-wrapper">
+        <button id="theme-toggle" class="theme-switch">Mode Terang</button>
     </div>
-    <canvas id="output" width="662" height="1600" style="display:none;"></canvas>
-    <img id="result">
+    
+    <div class="camera-box">
+        <div id="timer-overlay">3</div>
+        <video id="preview" autoplay playsinline></video>
+    </div>
+
+    <div class="controls" id="main-controls">
+        <button id="start-btn" class="btn-action">AMBIL FOTO</button>
+    </div>
+
+    <div id="result-display">
+        <img id="result-img" src="" alt="Photostrip">
+        <div class="controls">
+            <a id="download-link" class="btn-action" href="#" download="photostrip.png">SIMPAN FOTO</a>
+            <button id="reset-btn" class="btn-action btn-reset">FOTO ULANG</button>
+        </div>
+    </div>
 </div>
 
+<canvas id="main-canvas" width="600" height="1800" style="display:none;"></canvas>
+
 <script>
-    const view = document.getElementById('view');
-    const output = document.getElementById('output');
-    const btn = document.getElementById('shot');
-    const res = document.getElementById('result');
-    const dl = document.getElementById('download');
-    const counterDisplay = document.getElementById('counter');
-    const statusText = document.getElementById('status');
+    const video = document.getElementById('preview');
+    const canvas = document.getElementById('main-canvas');
+    const trigger = document.getElementById('start-btn');
+    const resetTrigger = document.getElementById('reset-btn');
+    const counter = document.getElementById('timer-overlay');
+    const label = document.getElementById('indicator');
+    const finalView = document.getElementById('result-img');
+    const finalContainer = document.getElementById('result-display');
+    const actionArea = document.getElementById('main-controls');
+    const dl = document.getElementById('download-link');
+    const themeToggle = document.getElementById('theme-toggle');
 
-    const templateImg = new Image();
-    // Gunakan URL gambar yang kamu kirim tadi (atau ganti ke nama file lokal jika pakai server)
-    templateImg.src = 'Filmstrip High Quality Png - Blank Photo Booth Strip, Transparent Png(662x1600) - PinPng.jpg';
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.innerText = 'Mode Terang';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            themeToggle.innerText = 'Mode Gelap';
+        }
+    });
 
-    async function init() {
+    async function setupCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            view.srcObject = stream;
-        } catch (e) {
-            alert("Buka file ini menggunakan 'Live Server' di VS Code atau izinkan kamera!");
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 800, height: 600 } 
+            });
+            video.srcObject = stream;
+        } catch (err) {
+            label.innerText = "AKSES KAMERA DITOLAK";
         }
     }
 
-    const wait = (ms) => new Promise(res => setTimeout(res, ms));
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
-    btn.onclick = async () => {
-        const ctx = output.getContext('2d');
-        btn.disabled = true;
-        res.style.display = 'none';
-        
-        const pos = [55, 435, 815, 1200];
+    resetTrigger.addEventListener('click', () => {
+        finalContainer.style.display = 'none';
+        actionArea.style.display = 'flex';
+        label.innerText = "StopnShot!";
+    });
+
+    trigger.addEventListener('click', async () => {
+        const ctx = canvas.getContext('2d');
+        trigger.disabled = true;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const frameWidth = 520;
+        const frameHeight = 390;
+        const xOffset = (canvas.width - frameWidth) / 2;
+        const yPositions = [60, 480, 900, 1320];
 
         for (let i = 0; i < 4; i++) {
-            statusText.innerText = `Shot ${i+1}/4`;
-            for (let c = 3; c > 0; c--) {
-                counterDisplay.innerText = c;
-                counterDisplay.style.display = 'block';
-                await wait(800);
-            }
-            counterDisplay.style.display = 'none';
+            label.innerText = `FOTO ${i + 1} / 4`;
             
-            // Gambar foto
+            for (let t = 3; t > 0; t--) {
+                counter.innerText = t;
+                counter.style.display = 'block';
+                await sleep(1000);
+            }
+            
+            counter.style.display = 'none';
+            
             ctx.save();
-            ctx.translate(85 + 490, pos[i]);
+            ctx.translate(xOffset + frameWidth, yPositions[i]);
             ctx.scale(-1, 1);
-            ctx.drawImage(view, 0, 0, 490, 345);
+            ctx.drawImage(video, 0, 0, frameWidth, frameHeight);
             ctx.restore();
-            await wait(500);
+            
+            label.innerText = "SMILE!";
+            await sleep(600);
         }
 
-        // Gambar template DI ATAS foto (Layer atas)
-        ctx.drawImage(templateImg, 0, 0, 662, 1600);
+        ctx.fillStyle = "#222";
+        ctx.font = "bold 30px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Today.", canvas.width / 2, 1750);
 
-        try {
-            const data = output.toDataURL('image/png');
-            res.src = data;
-            res.style.display = 'block';
-            dl.href = data;
-            dl.style.display = 'block';
-            statusText.innerText = "Selesai!";
-        } catch (err) {
-            console.error(err);
-            alert("Error: Browser memblokir penggabungan gambar. Coba jalankan lewat VS Code Live Server!");
-        }
+        canvas.toBlob((blob) => {
+            const fileUrl = URL.createObjectURL(blob);
+            finalView.src = fileUrl;
+            dl.href = fileUrl;
+        }, 'image/png');
         
-        btn.disabled = false;
-    };
+        actionArea.style.display = 'none';
+        finalContainer.style.display = 'block';
+        trigger.disabled = false;
+        label.innerText = "SELESAI!";
+    });
 
-    init();
+    setupCamera();
 </script>
+
 </body>
 </html>
